@@ -1,11 +1,14 @@
 const express = require("express");
+require('dotenv').config()
 
 const app = express();
 const PORT = 3000;
 
-app.get("/test", (req, res, next) => {
-    console.log("in backend");
-});
+//ROUTER IMPORTS
+const tokenRouter = require("./routers/tokenRouter");
+
+app.use(express.json());
+app.use("/token", tokenRouter);
 
 //GLOBAL ERROR HANDLING
 app.use((err, req, res, next) => {
