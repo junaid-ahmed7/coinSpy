@@ -84,34 +84,6 @@ const HistoryUpload = () => {
                 sellers[tx[4]].sold += amount;
               }
             }
-            // const dateTime = tx[3];
-            // const splitter = dateTime.indexOf(" ");
-            // const date = dateTime.slice(0, splitter);
-            // const time = dateTime.slice(splitter);
-            // if (
-            //   helperFunctions.compareDates(date, catalystDate) &&
-            //   helperFunctions.compareTimes(time, catalystTime)
-            // ) {
-            //   if (amount > minTarget) {
-            //     if (buyers[tx[5]] !== undefined) {
-            //       buyers[tx[5]] += amount;
-            //     } else {
-            //       buyers[tx[5]] = amount;
-            //     }
-            //   }
-            // } else if (
-            //   !helperFunctions.compareDates(date, catalystDate) ||
-            //   (helperFunctions.compareDates(date, catalystDate) &&
-            //     !helperFunctions.compareTimes(time, catalystTime))
-            // ) {
-            //   if (buyers[tx[4]] !== undefined) {
-            //     if (sharks[tx[4]] !== undefined) {
-            //       sharks[tx[4]] += amount;
-            //     } else {
-            //       sharks[tx[4]] = amount;
-            //     }
-            //   }
-            // }
           }
         }
         const sharksArray = Object.entries(sellers);
@@ -121,37 +93,39 @@ const HistoryUpload = () => {
   };
   return (
     <div>
-      <div>
-        <label htmlFor="minTokenInput">
-          Minimum Amount of Tokens to Check:
-        </label>
-        <input
-          type="number"
-          id="minTokenInput"
-          onChange={(event) => {
-            setMinTarget(event.target.value);
-          }}
-        />
-      </div>
-      <div>
-        <label htmlFor="catalystDateInput">Set the Catalyst Date:</label>
-        <input
-          type="date"
-          id="catalystDateInput"
-          onChange={(event) => {
-            setCatalystDate(event.target.value);
-          }}
-        />
-      </div>
-      <div>
-        <label htmlFor="catalystTimeInput">Set the Catalyst Time:</label>
-        <input
-          type="time"
-          id="catalystTimeInput"
-          onChange={(event) => {
-            setCatalystTime(event.target.value);
-          }}
-        />
+      <div className="inputs__container">
+        <div>
+          <label htmlFor="minTokenInput">
+            Minimum Amount of Tokens to Check:
+          </label>
+          <input
+            type="number"
+            id="minTokenInput"
+            onChange={(event) => {
+              setMinTarget(event.target.value);
+            }}
+          />
+        </div>
+        <div>
+          <label htmlFor="catalystDateInput">Set the Catalyst Date:</label>
+          <input
+            type="date"
+            id="catalystDateInput"
+            onChange={(event) => {
+              setCatalystDate(event.target.value);
+            }}
+          />
+        </div>
+        <div>
+          <label htmlFor="catalystTimeInput">Set the Catalyst Time:</label>
+          <input
+            type="time"
+            id="catalystTimeInput"
+            onChange={(event) => {
+              setCatalystTime(event.target.value);
+            }}
+          />
+        </div>
       </div>
       <div id="upload__div">
         <p id="upload__text">Upload your token history below!</p>
@@ -161,9 +135,14 @@ const HistoryUpload = () => {
         <h2>Sharks:</h2>
         <ul>
           {sharkAccounts.map(([wallet, amounts], index) => {
+            const url = `https://etherscan.io/address/${wallet}`;
             return (
               <li key={index}>
-                {wallet} bought: {amounts.bought} sold: {amounts.sold}
+                Wallet:{" "}
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                  {wallet}
+                </a>{" "}
+                Bought: {amounts.bought} sold: {amounts.sold}
               </li>
             );
           })}
