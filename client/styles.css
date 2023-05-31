@@ -1,0 +1,86 @@
+* {
+  font-family: "Montserrat Alternates", sans-serif;
+  font-family: "Quicksand", sans-serif;
+  color: #ffffff;
+}
+
+.main__header {
+  font-size: 2rem;
+  color: #ffffff;
+}
+body {
+  background: #000000;
+}
+
+.inputs__container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.inputs__container div {
+  display: flex;
+  align-items: center;
+}
+
+.inputs__container label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.inputs__container input {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+}
+
+.inputs__container input[type="number"],
+.inputs__container input[type="date"],
+.inputs__container input[type="time"] {
+  background-color: #0080ff;
+  color: #ffffff;
+}
+
+#upload__div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+#upload__text {
+  font-weight: bold;
+}
+
+#fileItem {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+}
+
+div {
+  margin-top: 20px;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  margin-bottom: 5px;
+}
+
+.beta__button {
+    color: #000000;
+}
