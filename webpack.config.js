@@ -23,14 +23,12 @@ module.exports = {
     historyApiFallback: {
       index: "./dist/index.html",
     },
-
     static: {
       // match the output path
       directory: path.resolve(__dirname, "dist"),
       // match the output 'publicPath'
       publicPath: "/dist/",
     },
-
     headers: { "Access-Control-Allow-Origin": "*" },
     /**
      * proxy is required in order to make api calls to
@@ -48,7 +46,14 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /.(js|jsx)$/,
+        test: /\.(ts|tsx)$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "ts-loader",
+        },
+      },
+      {
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
           loader: "babel-loader",
@@ -66,12 +71,12 @@ module.exports = {
     }),
   ],
   resolve: {
-    // Enable importing JS / JSX files without specifying their extension
-    extensions: [".js", ".jsx"],
+    // Enable importing JS / JSX / TS / TSX files without specifying their extension
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
     fallback: {
-        "fs": false,
-        "os": false,
-        "path": false
-    }
+      fs: false,
+      os: false,
+      path: false,
+    },
   },
 };
