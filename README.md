@@ -23,6 +23,7 @@ CoinSpy is a web-based application, so there's no need for a physical installati
 2. **Set Catalyst Time**: Input the specific catalyst time in the provided field. This time serves as the cutoff for determining when sharks have made their purchases and sales.
 3. **Set Minimum Value**: Define the minimum value for transactions. Any transaction below this value will not be considered in the analysis.
 4. **Shark Identification**: After inputting your data and settings, CoinSpy will analyze the data and provide a list of potential sharks who made transactions meeting your criteria.
+5. **Download Sharks**: CoinSpy will generate a CSV file for you to keep, so you can track your previous searches and sharks found.
 
 ## Troubleshooting & Feedback
 
@@ -31,3 +32,5 @@ We appreciate your feedback and suggestions to improve CoinSpy. If you have any 
 ## License
 
 CoinSpy is a proprietary software, all rights reserved.
+
+## :hammer_and_wrench: Built with :heart: by Junaid Ahmed

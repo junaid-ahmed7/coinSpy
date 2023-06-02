@@ -1,153 +1,44 @@
 import React, { useState } from "react";
-const csvParse = require("papaparse");
-import helperFunctions from "../helper-functions/helperFunctions";
+import { useDispatch, useSelector } from "react-redux";
+import CSVDownloadButton from "./CSVDownloadButton";
+import MinTokensInput from "./MinTokensInput";
+import CatalystDateInput from "./CatalystDate";
+import CatalystTimeInput from "./CatalystTime";
+import CatalystWindowInput from "./CatalystWindow";
+import onUpload from "../helper-functions/uploadFunction";
+import SharkList from "./SharkList";
 
 const HistoryUpload = () => {
+  const catalystState = useSelector((state) => state.catalyst);
+  const dispatch = useDispatch();
   const [sharkAccounts, setSharkAccounts] = useState([]);
-  const [minTarget, setMinTarget] = useState(0);
-  const [catalystDate, setCatalystDate] = useState(0);
-  const [catalystTime, setCatalystTime] = useState(0);
 
-  const onUpload = (event) => {
-    if (!catalystDate || !catalystTime) {
-      alert("Please input a Catalyst First");
-      return;
-    }
+  const handleUpload = (event) => {
     const file = event.target.files[0];
-
-    csvParse.parse(file, {
-      complete: (results, file) => {
-        //FIRST FILTER THROUGH ALL POTENTIAL BUYERS AND FIND THOSE WHO PURCHASED TOTAL AMOUNT ABOVE MINIMUN, BEFORE THE CATALYST TIME
-        const buyerAmounts = {};
-        const buyers = {};
-        let catalystIndex = 1;
-        for (let i = 1; i < results.data.length - 1; i++) {
-          //VAR TO STORE CURRENT TRANSACTION
-          const tx = results.data[i];
-          //ONLY LOOK AT TRANSACTION IF ITS ANY TYPE OF SWAP OR EXECUTION
-          if (
-            tx[7].slice(0, 4) === "Swap" ||
-            tx[7] === "Unoswap" ||
-            tx[7] === "Execute"
-          ) {
-            //VARS TO STORE ALL DATA WE NEED FROM THE TRANSACTION
-            const amount = parseFloat(tx[6].replaceAll(",", ""));
-            const dateTime = tx[3];
-            const splitter = dateTime.indexOf(" ");
-            const date = dateTime.slice(0, splitter);
-            const time = dateTime.slice(splitter);
-            //WHEN WE REACH THE TRANSACTION WITH A TIME THAT IS GREATER THAN THE CATALYST TIME, WE CAN SET THE CATALYST INDEX FOR THE NEXT LOOP, AND BREAK
-            if (
-              !helperFunctions.compareDates(date, catalystDate) ||
-              (helperFunctions.compareDates(date, catalystDate) &&
-                !helperFunctions.compareTimes(time, catalystTime))
-            ) {
-              catalystIndex = i;
-              break;
-            }
-            //IF BOTH DATE IS BEFORE OR SAME AS CATALYST, AND TIME IS BEFORE CATALYST, TRANSACTION WILL BE LOOKED AT
-            if (
-              helperFunctions.compareDates(date, catalystDate) &&
-              helperFunctions.compareTimes(time, catalystTime)
-            ) {
-              //TRACKING HOW MUCH WAS PURCHASED BY ONE WALLET
-              if (!(tx[5] in buyerAmounts)) {
-                buyerAmounts[tx[5]] = amount;
-              } else {
-                buyerAmounts[tx[5]] += amount;
-              }
-              //IF AMOUNT PURCHASED EVER BECOMES GREATER THAN MIN AMOUNT, WE ADD TO BUYERS THAT WE ARE GOING TO LOOK AT LATER
-              if (buyerAmounts[tx[5]] > minTarget) {
-                buyers[tx[5]] = buyerAmounts[tx[5]];
-              }
-            }
-          }
-        }
-        console.log(buyers, "buyers");
-        console.log(catalystIndex);
-        const sellers = {};
-        const sharks = {};
-        //LOOP ONLY ON TRANSACTIONS AFTER THE CATALYST, NOW WE SEE WHICH OF THE BUYERS SOLD
-        for (let i = catalystIndex; i < results.data.length - 1; i++) {
-          const tx = results.data[i];
-          if (
-            tx[7].slice(0, 4) === "Swap" ||
-            tx[7] === "Unoswap" ||
-            tx[7] === "Execute"
-          ) {
-            const amount = parseFloat(tx[6].replaceAll(",", ""));
-            //WE ONLY WANT TO LOOK AT THOSE WHO ARE SELLING, WHO ARE IN OUR BUYERS OBJECT
-            if (tx[4] in buyers) {
-              if (!(tx[4] in sellers)) {
-                sellers[tx[4]] = { bought: buyers[tx[4]], sold: amount };
-              } else {
-                sellers[tx[4]].sold += amount;
-              }
-            }
-          }
-        }
-        const sharksArray = Object.entries(sellers);
-        setSharkAccounts(sharksArray);
-      },
-    });
+    onUpload(file, catalystState, setSharkAccounts, dispatch);
+    event.target.value = "";
   };
   return (
     <div>
       <div className="inputs__container">
-        <div>
-          <label htmlFor="minTokenInput">
-            Minimum Amount of Tokens to Check:
-          </label>
-          <input
-            type="number"
-            id="minTokenInput"
-            onChange={(event) => {
-              setMinTarget(event.target.value);
-            }}
-          />
-        </div>
-        <div>
-          <label htmlFor="catalystDateInput">Set the Catalyst Date:</label>
-          <input
-            type="date"
-            id="catalystDateInput"
-            onChange={(event) => {
-              setCatalystDate(event.target.value);
-            }}
-          />
-        </div>
-        <div>
-          <label htmlFor="catalystTimeInput">Set the Catalyst Time:</label>
-          <input
-            type="time"
-            id="catalystTimeInput"
-            onChange={(event) => {
-              setCatalystTime(event.target.value);
-            }}
-          />
-        </div>
+        <MinTokensInput />
+        <CatalystDateInput />
+        <CatalystWindowInput />
+        <CatalystTimeInput />
       </div>
       <div id="upload__div">
-        <p id="upload__text">Upload your token history below!</p>
-        <input id="fileItem" type="file" onChange={onUpload} />
+        <label htmlFor="fileItem" className="file__button">
+          Upload Token History
+        </label>
+        <input
+          id="fileItem"
+          type="file"
+          className="file__input"
+          onChange={handleUpload}
+        />
       </div>
-      <div>
-        <h2>Sharks:</h2>
-        <ul>
-          {sharkAccounts.map(([wallet, amounts], index) => {
-            const url = `https://etherscan.io/address/${wallet}`;
-            return (
-              <li key={index}>
-                Wallet:{" "}
-                <a href={url} target="_blank" rel="noopener noreferrer">
-                  {wallet}
-                </a>{" "}
-                Bought: {amounts.bought} sold: {amounts.sold}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+      <CSVDownloadButton sharkAccounts={sharkAccounts} />
+      <SharkList sharkAccounts={sharkAccounts} />
     </div>
   );
 };

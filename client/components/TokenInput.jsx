@@ -13,10 +13,8 @@ const TokenInput = () => {
       }),
     });
     const { url } = await data.json();
-    console.log(url);
     const tokenData = await fetch(url);
     const parse = await tokenData.json();
-    console.log(parse);
   };
   return (
     <div>
@@ -37,8 +35,9 @@ const TokenInput = () => {
             id="tokenText"
             onChange={(event) => setToken(event.target.value)}
           ></input>
-          <button className="beta__button"
-          //  onClick={getURL}
+          <button
+            className="beta__button"
+            //  onClick={getURL}
           >
             Get Transactions
           </button>
