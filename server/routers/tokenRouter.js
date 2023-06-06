@@ -9,11 +9,8 @@ router.post(
   transactionListController.getList,
   transactionController.getValue,
   async (req, res, next) => {
-    for (const transaction of parsed.result) {
-      console.log(transaction.hash);
-    }
-    console.log(parsed.result.length);
-    res.send({});
+    const txs = res.locals;
+    res.send({ txs });
   }
 );
 

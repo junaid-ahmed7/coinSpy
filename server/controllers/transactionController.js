@@ -1,10 +1,29 @@
 module.exports = {
   async getValue(req, res, next) {
-    for (const transaction of res.locals.result) {
-      const url = `https://api.etherscan.io/api?module=proxy&action=eth_getTransactionByHash&txhash=${transaction.hash}&apikey=${process.env.ETHERSCAN_KEY}`;
-      const response = await fetch(url);
-      const transactionInfo = await response.json();
-      console.log(transactionInfo);
+    const url = `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`;
+    for (let i = 0; i < 10; i++) {
+      const transaction = res.locals.result[i];
+      const data = {
+        jsonrpc: "2.0",
+        method: "eth_getTransactionByHash",
+        params: [transaction.hash],
+        id: 1,
+      };
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+
+        const responseData = await response.json();
+        console.log(responseData);
+      } catch (error) {
+        console.error(error);
+      }
     }
     return next();
   },

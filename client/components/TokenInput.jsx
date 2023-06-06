@@ -12,9 +12,19 @@ const TokenInput = () => {
         token,
       }),
     });
-    const { url } = await data.json();
-    const tokenData = await fetch(url);
-    const parse = await tokenData.json();
+    const { txs } = await data.json();
+    console.log(txs);
+    for (let i = 0; i < txs.result.length; i++) {
+      console.log(txs.result[i].hash);
+      console.log(txs.result[i].to);
+      console.log(txs.result[i].from);
+      console.log(txs.result[i].timestamp);
+      console.log(txs.result[i].tokenName);
+      console.log(txs.result[i].value);
+    }
+    // const { url } = await data.json();
+    // const tokenData = await fetch(url);
+    // const parse = await tokenData.json();
   };
   return (
     <div>

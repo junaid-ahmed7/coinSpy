@@ -1,10 +1,9 @@
 module.exports = {
   async getList(req, res, next) {
     const { token } = req.body;
-    const url = `https://api.etherscan.io/api?module=account&action=txlistinternal&address=${token}&startblock=0&endblock=99999999&page=1&offset=10000&sort=asc&apikey=${process.env.ETHERSCAN_KEY}`;
-    const response = await fetch(url);
+    const urlNew = `https://api.etherscan.io/api?module=account&action=tokentx&contractaddress=${token}&page=1&offset=100&startblock=0&endblock=27025780&sort=asc&apikey=${process.env.ETHERSCAN_KEY}`;
+    const response = await fetch(urlNew);
     const transactions = await response.json();
-    console.log(transactions.result.length);
     res.locals = transactions;
     return next();
   },

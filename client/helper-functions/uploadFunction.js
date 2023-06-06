@@ -1,29 +1,31 @@
 const csvParse = require("papaparse");
-import helperFunctions from "./helperFunctions";
-import { resetState } from "../reducers/catalystReducer";
+import { setSharkAccounts } from "../reducers/catalystReducer";
+import { dateTimeUtils } from "./dateTimeUtils";
 
-const onUpload = (file, catalystState, setSharkAccounts, dispatch) => {
+const onUpload = (file, catalystState, dispatch) => {
   //GRAB RELEVENT PARTS OF THE STATE
-  const { minTokens, catalystDate, catalystTime, catalystWindow } =
+  const { minTokens, catalyst, catalystStartWindow, catalystEndWindow } =
     catalystState;
-
-  if (!catalystDate || !catalystTime) {
+  if (
+    catalystStartWindow === "2023-06-01T00:00" ||
+    catalystEndWindow === "2023-06-01T00:00" ||
+    catalyst === "2023-06-01T00:00"
+  ) {
     alert("Please input a Catalyst First");
-    dispatch(resetState());
     return;
   }
 
   if (!file) {
     alert("Invalid file uploaded");
-    dispatch(resetState());
     return;
   }
-
+  //IF CATALYST IS AFTER THE END WINDOW, OR IF START WINDOW IS AFTER THE END WINDOW, OR IF START WINDOW IS AFTER THE CATALYST, TIME COMPARISONS ARE INVALID
   if (
-    helperFunctions.checkTimeValidity(catalystTime, catalystWindow) === false
+    dateTimeUtils.compareDateTimes(catalyst, catalystEndWindow) ||
+    dateTimeUtils.compareDateTimes(catalystStartWindow, catalystEndWindow) ||
+    dateTimeUtils.compareDateTimes(catalystStartWindow, catalyst)
   ) {
-    alert("Inputted catalyst window makes time invalid");
-    dispatch(resetState());
+    alert("Invalid Catalyst Timings");
     return;
   }
 
@@ -35,18 +37,16 @@ const onUpload = (file, catalystState, setSharkAccounts, dispatch) => {
       let catalystIndex = 1;
       if (!results.data || results.data.length <= 1) {
         alert("Invalid file uploaded");
-        dispatch(resetState());
         return;
       }
-      //GET THE NEW TIMES, AFTER ACCOUNTING FOR THE PASSED IN WINDOW
-      const catalystStartWindow = helperFunctions.decrementTime(
-        catalystTime,
-        catalystWindow
-      );
-      const catalystEndWindow = helperFunctions.incrementTime(
-        catalystTime,
-        catalystWindow
-      );
+      if (
+        !Array.isArray(results.data) ||
+        !Array.isArray(results.data[0]) ||
+        results.data[0][0] !== "Txhash"
+      ) {
+        alert("Invalid CSV File");
+        return;
+      }
       for (let i = 1; i < results.data.length - 1; i++) {
         //VAR TO STORE CURRENT TRANSACTION
         const tx = results.data[i];
@@ -58,28 +58,21 @@ const onUpload = (file, catalystState, setSharkAccounts, dispatch) => {
         ) {
           //VARS TO STORE ALL DATA WE NEED FROM THE TRANSACTION
           const amount = parseFloat(tx[6].replaceAll(",", ""));
-          const dateTime = tx[3];
-          const splitter = dateTime.indexOf(" ");
-          const date = dateTime.slice(0, splitter);
-          const time = dateTime.slice(splitter);
+          //DATETIME FROM TRANSACTION CONVERTED TO JS DATE OBJECT FOR COMPARISON WITH CATALYSTS
+          const dateTime = dateTimeUtils.convertStringToDate(tx[3]);
           //WHEN WE REACH THE TRANSACTION WITH A TIME THAT IS GREATER THAN THE CATALYST TIME, OR A DATE GREATER, WE CAN SET THE CATALYST INDEX FOR THE NEXT LOOP, AND BREAK
-          if (
-            !helperFunctions.compareDates(date, catalystDate) ||
-            (helperFunctions.compareDateEquality(date, catalystDate) &&
-              !helperFunctions.compareTimes(time, catalystTime))
-          ) {
+          if (dateTimeUtils.compareDateTimes(dateTime, catalyst)) {
             catalystIndex = i;
             break;
           }
-          //IF BOTH DATE IS SAME AS CATALYST, AND TIME IS BEFORE CATALYST TIME, AND TIME IS AFTER THE CATALYST START WINDOW, TRANSACTION WILL BE LOOKED AT
-          if (
-            helperFunctions.compareDateEquality(date, catalystDate) &&
-            helperFunctions.compareTimes(time, catalystTime) &&
-            !helperFunctions.compareTimes(time, catalystStartWindow)
-          ) {
+          //IF LAST CHECK WASNT TRUE, CURRENT DATE TIME IS BEFORE THE CATALYST TIME, SO NEED TO CHECK IF THE CURRENT DATETIME IS AFTER THE CATALYST START WINDOW
+          if (dateTimeUtils.compareDateTimes(dateTime, catalystStartWindow)) {
             //TRACKING HOW MUCH WAS PURCHASED BY ONE WALLET
             if (!(tx[5] in buyerAmounts)) {
-              buyerAmounts[tx[5]] = { bought: amount, firstPurchase: dateTime };
+              buyerAmounts[tx[5]] = {
+                bought: amount,
+                firstPurchase: dateTime.toString(),
+              };
             } else {
               buyerAmounts[tx[5]].bought += amount;
             }
@@ -100,29 +93,23 @@ const onUpload = (file, catalystState, setSharkAccounts, dispatch) => {
           tx[7] === "Execute"
         ) {
           const amount = parseFloat(tx[6].replaceAll(",", ""));
-          const dateTime = tx[3];
-          const splitter = dateTime.indexOf(" ");
-          const date = dateTime.slice(0, splitter);
-          const time = dateTime.slice(splitter);
-          if (
-            helperFunctions.compareTimes(time, catalystEndWindow) &&
-            helperFunctions.compareDateEquality(date, catalystDate)
-          ) {
-            //WE ONLY WANT TO LOOK AT THOSE WHO ARE SELLING, WHO ARE IN OUR BUYERS OBJECT
-            if (tx[4] in buyers) {
-              if (!(tx[4] in sellers)) {
-                sellers[tx[4]] = { ...buyers[tx[4]], sold: amount };
-              } else {
-                sellers[tx[4]].sold += amount;
-              }
+          const dateTime = dateTimeUtils.convertStringToDate(tx[3]);
+          //IF CURRENT TRANSACTION TIME IS AFTER THE CATALYST END WINDOW, NO MORE TRANSACTIONS TO LOOK AT, SO WE BREAK
+          if (dateTimeUtils.compareDateTimes(dateTime, catalystEndWindow)) {
+            break;
+          }
+          //WE ONLY WANT TO LOOK AT THOSE WHO ARE SELLING, WHO ARE IN OUR BUYERS OBJECT
+          if (tx[4] in buyers) {
+            if (!(tx[4] in sellers)) {
+              sellers[tx[4]] = { ...buyers[tx[4]], sold: amount };
+            } else {
+              sellers[tx[4]].sold += amount;
             }
           }
         }
       }
       const sharksArray = Object.entries(sellers);
-      setSharkAccounts(sharksArray);
-      //RESET STATE OF INPUT FIELDS UPON COMPLETION
-      dispatch(resetState());
+      dispatch(setSharkAccounts(sharksArray));
     },
   });
 };
